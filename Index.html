@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoPro v4 — Instructor Auto</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14; --surface:#13161e; --surface2:#1a1e28; --border:#252a38;
+    --accent:#f4a227; --accent2:#e05c2a; --green:#2ecb71; --red:#e84040;
+    --blue:#4a9eff; --text:#e8ecf4; --muted:#6b7490;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(244,162,39,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(244,162,39,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  .app{position:relative;z-index:1;display:flex;flex-direction:column;min-height:100vh;}
+
+  header{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:rgba(13,15,20,0.95);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;gap:12px;flex-wrap:wrap;}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .logo span{-webkit-text-fill-color:var(--text);}
+  .nav-tabs{display:flex;gap:3px;flex-wrap:wrap;}
+  .tab{padding:6px 15px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all 0.2s;border:1px solid transparent;white-space:nowrap;}
+  .tab:hover{color:var(--text);background:var(--surface2);}
+  .tab.active{color:var(--accent);background:rgba(244,162,39,0.1);border-color:rgba(244,162,39,0.3);}
+  .header-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--surface);padding:5px 12px;border-radius:20px;border:1px solid var(--border);}
+
+  .reminder-banner{display:none;background:rgba(74,158,255,0.1);border-bottom:1px solid rgba(74,158,255,0.3);padding:9px 28px;align-items:center;gap:10px;font-size:13px;color:var(--blue);}
+  .reminder-banner.show{display:flex;}
+
+  main{flex:1;padding:22px 28px;}
+  .panel{display:none;} .panel.active{display:block;}
+
+  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;position:relative;overflow:hidden;}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));}
+  .stat-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  .stat-value{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:2px;line-height:1;color:var(--accent);}
+  .stat-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
+  .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;}
+
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;font-family:'DM Sans',sans-serif;}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;}
+  .btn-primary:hover{opacity:0.9;transform:translateY(-1px);}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);border-color:var(--muted);}
+  .btn-green{background:rgba(46,203,113,0.15);color:var(--green);border:1px solid rgba(46,203,113,0.3);}
+  .btn-blue{background:rgba(74,158,255,0.15);color:var(--blue);border:1px solid rgba(74,158,255,0.3);}
+  .btn-sm{padding:4px 10px;font-size:12px;}
+
+  .table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;min-width:700px;}
+  thead tr{background:var(--surface2);border-bottom:1px solid var(--border);}
+  th{padding:10px 13px;text-align:left;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+  td{padding:11px 13px;font-size:13px;border-bottom:1px solid rgba(37,42,56,0.5);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(244,162,39,0.02);}
+
+  .progress-wrap{width:100%;background:var(--surface2);border-radius:99px;height:6px;min-width:100px;}
+  .progress-fill{height:6px;border-radius:99px;transition:width 0.4s;}
+  .progress-label{font-size:11px;color:var(--muted);margin-top:3px;font-family:'DM Mono',monospace;}
+
+  .badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;}
+  .badge-green{background:rgba(46,203,113,0.15);color:var(--green);}
+  .badge-orange{background:rgba(244,162,39,0.15);color:var(--accent);}
+  .badge-red{background:rgba(232,64,64,0.15);color:var(--red);}
+  .badge-blue{background:rgba(74,158,255,0.15);color:var(--blue);}
+
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;}
+  .grid-3{display:grid;grid-template-columns:2fr 1fr;gap:18px;}
+
+  .form-group{margin-bottom:13px;}
+  .form-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;display:block;}
+  .form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;transition:border-color 0.2s;outline:none;}
+  .form-input:focus,.form-select:focus{border-color:var(--accent);}
+  .form-select option{background:var(--surface2);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(4px);z-index:999;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:26px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:slideUp 0.2s ease;}
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .modal-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:18px;color:var(--accent);}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+
+  /* EXERCITII CHECKBOXES */
+  .exercitii-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+  .ex-checkbox{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all 0.15s;user-select:none;}
+  .ex-checkbox:hover{border-color:var(--accent);background:rgba(244,162,39,0.05);}
+  .ex-checkbox.checked{border-color:var(--green);background:rgba(46,203,113,0.08);}
+  .ex-checkbox input[type=checkbox]{accent-color:var(--green);width:16px;height:16px;cursor:pointer;}
+  .ex-label{font-size:13px;font-weight:500;}
+
+  /* EXERCITII PILLS in tabel */
+  .ex-pills{display:flex;flex-wrap:wrap;gap:4px;}
+  .ex-pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;background:rgba(46,203,113,0.12);color:var(--green);border:1px solid rgba(46,203,113,0.2);}
+
+  /* ELEV CARD in dashboard */
+  .elev-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000;flex-shrink:0;}
+
+  /* ORE CIRCLE */
+  .ore-circle{position:relative;width:80px;height:80px;flex-shrink:0;}
+  .ore-circle svg{transform:rotate(-90deg);}
+  .ore-circle-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;line-height:1;}
+  .ore-circle-val{font-size:18px;color:var(--accent);}
+  .ore-circle-sub{font-size:9px;color:var(--muted);letter-spacing:0.5px;}
+
+  .upcoming-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .upcoming-item:last-child{border-bottom:none;}
+  .upcoming-time{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--accent);min-width:46px;}
+
+  .notif-container{position:fixed;top:80px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+  .notif{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 16px;min-width:270px;box-shadow:0 8px 30px rgba(0,0,0,0.4);animation:slideIn 0.3s ease;font-size:13px;}
+  .notif.notif-warning{border-left:3px solid var(--accent);}
+  .notif.notif-success{border-left:3px solid var(--green);}
+  .notif.notif-info{border-left:3px solid var(--blue);}
+  @keyframes slideIn{from{transform:translateX(100%);opacity:0;}to{transform:translateX(0);opacity:1;}}
+  .notif-title{font-weight:600;margin-bottom:2px;}
+  .notif-body{color:var(--muted);}
+
+  .export-bar{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;margin-bottom:16px;}
+
+  /* CONFIRM MODAL */
+  .confirm-modal{width:360px;text-align:center;}
+  .confirm-icon{font-size:40px;margin-bottom:12px;}
+  .confirm-msg{font-size:15px;font-weight:600;margin-bottom:6px;}
+  .confirm-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+  .confirm-btns{display:flex;gap:10px;justify-content:center;}
+  .btn-danger{background:rgba(232,64,64,0.15);color:var(--red);border:1px solid rgba(232,64,64,0.3);}
+  .btn-danger:hover{background:rgba(232,64,64,0.25);}
+
+  .examen-section{background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:16px;}
+  .examen-title{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  .examen-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .examen-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;}
+  .examen-card-title{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .examen-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .examen-label{font-size:11px;color:var(--muted);min-width:80px;}
+  .examen-val{font-size:13px;font-weight:600;}
+  .rezultat-badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.15s;}
+  .rezultat-promovat{background:rgba(46,203,113,0.15);color:var(--green);border:1px solid rgba(46,203,113,0.3);}
+  .rezultat-picat{background:rgba(232,64,64,0.15);color:var(--red);border:1px solid rgba(232,64,64,0.3);}
+  .rezultat-asteptare{background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+  .incercare-btns{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+  .inc-btn{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);transition:all 0.15s;font-family:'DM Sans',sans-serif;}
+  .inc-btn.active{background:rgba(244,162,39,0.15);color:var(--accent);border-color:rgba(244,162,39,0.4);}
+  .inc-btn:hover{border-color:var(--muted);}
+
+  .fisa-modal{width:600px;}
+  .fisa-header{display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+  .fisa-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#000;flex-shrink:0;}
+  .fisa-name{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;line-height:1.1;}
+  .fisa-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+
+  /* ORE PROGRESS BIG */
+  .ore-progress-big{background:var(--surface2);border-radius:14px;padding:16px;margin-bottom:16px;}
+  .ore-numbers{display:flex;align-items:baseline;gap:6px;margin-bottom:8px;}
+  .ore-big{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:2px;line-height:1;color:var(--accent);}
+  .ore-sep{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--muted);}
+  .ore-total{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--muted);}
+  .ore-unit{font-size:13px;color:var(--muted);margin-left:4px;}
+  .ore-bar{width:100%;background:var(--border);border-radius:99px;height:10px;margin:6px 0;}
+  .ore-bar-fill{height:10px;border-radius:99px;transition:width 0.5s ease;}
+  .ore-stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;}
+  .ore-stat{background:var(--surface);border-radius:10px;padding:10px 12px;text-align:center;}
+  .ore-stat-val{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;line-height:1;}
+  .ore-stat-lbl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+
+  /* CALENDAR SEDINTE */
+  .calendar-wrap{margin-bottom:16px;}
+  .calendar-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .cal-day-header{font-size:10px;color:var(--muted);text-align:center;padding:3px;font-weight:600;}
+  .cal-day{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--surface2);position:relative;cursor:default;}
+  .cal-day.empty{background:transparent;}
+  .cal-day.has-sedinta{background:rgba(244,162,39,0.15);border:1px solid rgba(244,162,39,0.35);color:var(--accent);font-weight:700;cursor:pointer;}
+  .cal-day.has-sedinta:hover{background:rgba(244,162,39,0.25);}
+  .cal-day.today{border:1px solid var(--blue);color:var(--blue);}
+
+  /* ISTORIC FISA */
+  .fisa-istoric{max-height:220px;overflow-y:auto;}
+  .fisa-sedinta-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:flex-start;}
+  .fisa-sedinta-item:last-child{border-bottom:none;}
+  .fisa-sed-nr{width:28px;height:28px;border-radius:50%;background:rgba(244,162,39,0.15);border:1px solid rgba(244,162,39,0.3);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:13px;color:var(--accent);flex-shrink:0;}
+  .fisa-sed-data{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
+  .fisa-sed-ex{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px;}
+
+  .sedinta-summary{background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+  .sedinta-summary-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+  .sedinta-summary-row span:first-child{color:var(--muted);}
+  .sedinta-summary-row strong{color:var(--accent);font-family:'DM Mono',monospace;}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="notif-container" id="notif-container"></div>
+
+<header>
+  <div class="logo">Auto<span>Pro</span></div>
+  <div class="nav-tabs">
+    <div class="tab active" onclick="switchTab('dashboard',this)">Dashboard</div>
+    <div class="tab" onclick="switchTab('elevi',this)">Elevi</div>
+    <div class="tab" onclick="switchTab('programare',this)">Programare</div>
+    <div class="tab" onclick="switchTab('istoric',this)">Istoric</div>
+    <div class="tab" onclick="switchTab('rapoarte',this)">Rapoarte</div>
+  </div>
+  <div class="header-date" id="currentDate"></div>
+</header>
+
+<div class="reminder-banner" id="reminder-banner">
+  🔔 &nbsp;<span id="reminder-text"></span>
+</div>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Elevi</div><div class="stat-value" id="st-elevi">0</div><div class="stat-sub">înregistrați</div></div>
+      <div class="stat-card"><div class="stat-label">Ședințe Azi</div><div class="stat-value" id="st-azi">0</div><div class="stat-sub">× 2 ore</div></div>
+      <div class="stat-card"><div class="stat-label">Ore Azi</div><div class="stat-value" id="st-ore-azi">0h</div><div class="stat-sub">din 30h total/elev</div></div>
+      <div class="stat-card"><div class="stat-label">Gata Examen</div><div class="stat-value" id="st-fin">0</div><div class="stat-sub">au completat 30h</div></div>
+    </div>
+    <div class="grid-3">
+      <div>
+        <div class="section-header"><div class="section-title">Programare Azi</div></div>
+        <div class="card" id="upcoming-list"><p style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nicio programare azi</p></div>
+      </div>
+      <div>
+        <div class="section-header"><div class="section-title">Elevi Activi</div></div>
+        <div class="card" id="active-elevi-list"><p style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Niciun elev</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ELEVI -->
+  <div class="panel" id="panel-elevi">
+    <div class="section-header">
+      <div class="section-title">Evidență Elevi</div>
+      <button class="btn btn-primary" onclick="deschideAdaugaElev()">+ Adaugă Elev</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Elev</th><th>Telefon</th><th>Ședințe</th><th>Ore Condus</th><th>Ore Rămase</th><th>Progres</th><th>Status</th><th>Acțiuni</th>
+        </tr></thead>
+        <tbody id="elevi-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PROGRAMARE -->
+  <div class="panel" id="panel-programare">
+    <div class="section-header">
+      <div class="section-title">Programări</div>
+      <button class="btn btn-primary" onclick="openModal('modal-programare')">+ Ședință Nouă</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Elev</th><th>Data</th><th>Ora</th><th>Loc Întâlnire</th><th>Durată</th><th>Exerciții Planificate</th><th>Status</th><th>Acțiuni</th></tr></thead>
+        <tbody id="prog-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ISTORIC -->
+  <div class="panel" id="panel-istoric">
+    <div class="section-header">
+      <div class="section-title">Istoric Ședințe</div>
+      <select class="form-select" id="filtru-elev" style="width:auto;font-size:13px;" onchange="renderIstoric()">
+        <option value="">Toți elevii</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Elev</th><th>Data</th><th>Ora</th><th>Ore</th><th>Exerciții Efectuate</th><th>Observații</th></tr></thead>
+        <tbody id="istoric-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RAPOARTE -->
+  <div class="panel" id="panel-rapoarte">
+    <div class="section-header"><div class="section-title">Rapoarte & Export</div></div>
+    <div class="export-bar">
+      <span style="font-size:12px;color:var(--muted);">Export:</span>
+      <button class="btn btn-blue btn-sm" onclick="exportCSV()">📊 Excel / CSV</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportPDF()">📄 PDF</button>
+      <div style="width:1px;height:20px;background:var(--border);margin:0 4px;"></div>
+      <span style="font-size:12px;color:var(--muted);">Backup:</span>
+      <button class="btn btn-green btn-sm" onclick="backupDate()">💾 Salvează Backup</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+        📂 Restaurează <input type="file" accept=".json" onchange="restaureazaBackup(event)" style="display:none;">
+      </label>
+    </div>
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-labe
