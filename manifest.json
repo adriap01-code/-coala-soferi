@@ -1,0 +1,16 @@
+{
+  "name": "AutoPro v4 — Instructor Auto",
+  "short_name": "AutoPro",
+  "description": "Gestionare elevi și ședințe auto",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d0f14",
+  "theme_color": "#f4a227",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2554/2554930.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
